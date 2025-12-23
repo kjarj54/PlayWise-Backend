@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: Optional[str] = None
     SMTP_FROM_NAME: Optional[str] = None
     
-    # Frontend URL (Expo app móvil)
-    FRONTEND_URL: str = "exp://localhost:19000"  # Expo Go app
+    # Frontend URL (opcional, solo para emails y OAuth redirects)
+    FRONTEND_URL: Optional[str] = None
     
-    # CORS - Configurado para Expo y desarrollo local
-    ALLOWED_ORIGINS: list[str] = ["*"]  # En producción, restringir a dominios específicos
+    # CORS - Configurado para desarrollo móvil
+    ALLOWED_ORIGINS: list[str] = ["*"]  # Permite todas las origins para apps móviles
     
     # External Game APIs
     RAWG_API_KEY: Optional[str] = None  # https://rawg.io/apidocs
