@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     PASSWORD_REQUIRE_DIGIT: bool = True
     PASSWORD_REQUIRE_SPECIAL: bool = False
     
+
+    BACKEND_URL: Optional[str] = None  # URL del backend para enlaces en correos electrónicos
+
     # OAuth2 - Google
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None

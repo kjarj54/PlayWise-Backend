@@ -42,7 +42,8 @@ from app.api.routes import (
     game_router,
     wishlist_router,
     calification_router,
-    friend_router
+    friend_router,
+    web_pages_router
 )
 
 # Incluir routers con prefijo /api
@@ -52,6 +53,9 @@ app.include_router(game_router, prefix="/api")
 app.include_router(wishlist_router, prefix="/api")
 app.include_router(calification_router, prefix="/api")
 app.include_router(friend_router, prefix="/api")
+
+# Incluir rutas web sin prefijo (para páginas HTML)
+app.include_router(web_pages_router)
 
 
 @app.get("/")
