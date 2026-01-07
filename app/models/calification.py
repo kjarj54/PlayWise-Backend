@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # =========================
@@ -23,8 +23,8 @@ class CalificationGame(CalificationGameBase, table=True):
     review: Optional[str] = Field(default=None, max_length=1000)  # Reseña opcional
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Relationships
     # user: Optional["User"] = Relationship(back_populates="califications")

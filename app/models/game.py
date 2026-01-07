@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # =========================
@@ -29,8 +29,8 @@ class Game(GameBase, table=True):
     publisher: Optional[str] = Field(default=None, max_length=255)
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Relationships (se definirán después)
     # wishlists: List["WishList"] = Relationship(back_populates="game")

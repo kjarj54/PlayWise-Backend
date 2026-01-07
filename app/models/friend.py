@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -29,7 +29,7 @@ class Friend(FriendBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     
     # Timestamps
-    request_date: datetime = Field(default_factory=datetime.utcnow)
+    request_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     response_date: Optional[datetime] = Field(default=None)
     
     # Relationships

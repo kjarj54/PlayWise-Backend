@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, TYPE_CHECKING
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -44,13 +44,15 @@ class User(UserBase, table=True):
     
     # Security fields
     is_verified: bool = Field(default=False)
+    is_email_activated: bool = Field(default=False)  # Activación por email
+    otp_verified_once: bool = Field(default=False)  # Si ya verificó OTP al menos una vez
     verification_token: Optional[str] = Field(default=None, max_length=255)
     reset_password_token: Optional[str] = Field(default=None, max_length=255)
     reset_password_expires: Optional[datetime] = Field(default=None)
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = Field(default=None)
     
     # Relationships (se importarán después para evitar circular imports)

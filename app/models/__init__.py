@@ -4,6 +4,7 @@
 
 # User models
 from .user import (
+
     User, 
     UserBase, 
     UserCreate, 
@@ -82,6 +83,16 @@ from .friend import (
     BlockedUsersResponse
 )
 
+# Device & OTP models
+from .device import (
+    TrustedDevice,
+    OTPCode,
+    OTPVerifyRequest,
+    OTPResponse,
+    LoginWithOTPResponse,
+    TrustedDeviceRead
+)
+
 
 __all__ = [
     # User
@@ -111,4 +122,8 @@ __all__ = [
     "Friend", "FriendBase", "FriendStatus", "FriendRequestCreate",
     "FriendRequestResponse", "FriendRead", "FriendReadWithUser",
     "FriendListResponse", "PendingRequestsResponse", "BlockedUsersResponse",
+    
+    # Device & OTP
+    "TrustedDevice", "OTPCode", "OTPVerifyRequest", "OTPResponse",
+    "LoginWithOTPResponse", "TrustedDeviceRead",
 ]

@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # =========================
@@ -20,7 +20,7 @@ class WishList(WishListBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     
     # Timestamps
-    added_at: datetime = Field(default_factory=datetime.utcnow)
+    added_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Relationships
     # user: Optional["User"] = Relationship(back_populates="wishlists")
