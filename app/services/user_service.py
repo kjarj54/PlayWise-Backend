@@ -237,18 +237,56 @@ class UserService:
     
     @staticmethod
     def verify_email(session: Session, token: str) -> User:
-        """Verificar email con token"""
+        """Verificar email con token (legacy - usar activate_account)"""
+        return UserService.activate_account(session, token)
+    
+    @staticmethod
+    def activate_account(session: Session, token: str) -> User:
+        """Activar cuenta con token de email"""
         statement = select(User).where(User.verification_token == token)
         user = session.exec(statement).first()
         
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification token"
+                detail="Invalid activation token"
+            )
+        
+        if user.is_email_activated:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Account is already activated"
             )
         
         user.is_verified = True
+        user.is_email_activated = True
         user.verification_token = None
+        user.updated_at = datetime.utcnow()
+        
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        return user
+    
+    @staticmethod
+    def regenerate_activation_token(session: Session, user_id: int) -> User:
+        """Regenerar token de activación"""
+        user = UserService.get_by_id(session, user_id)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if user.is_email_activated:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Account is already activated"
+            )
+        
+        user.verification_token = generate_verification_token()
         user.updated_at = datetime.utcnow()
         
         session.add(user)
