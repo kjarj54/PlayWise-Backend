@@ -188,6 +188,26 @@ def generate_reset_password_token() -> str:
     return secrets.token_urlsafe(32)
 
 
+def generate_otp_code() -> str:
+    """
+    Generate a 6-digit OTP code
+    
+    Returns:
+        6-digit numeric string
+    """
+    return ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+
+
+def generate_device_token() -> str:
+    """
+    Generate a secure device token
+    
+    Returns:
+        Random token string for device identification
+    """
+    return secrets.token_urlsafe(32)
+
+
 # =========================
 # TOKEN RESPONSE MODELS
 # =========================

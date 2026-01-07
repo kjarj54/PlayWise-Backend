@@ -42,9 +42,6 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: Optional[str] = None
     SMTP_FROM_NAME: Optional[str] = None
     
-    # Frontend URL (opcional, solo para emails y OAuth redirects)
-    FRONTEND_URL: Optional[str] = None
-    
     # CORS - Configurado para desarrollo móvil
     ALLOWED_ORIGINS: list[str] = ["*"]  # Permite todas las origins para apps móviles
     

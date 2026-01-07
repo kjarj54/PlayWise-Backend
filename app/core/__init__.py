@@ -12,6 +12,8 @@ from .security import (
     decode_token,
     generate_verification_token,
     generate_reset_password_token,
+    generate_otp_code,
+    generate_device_token,
     Token,
     TokenData,
     pwd_context
@@ -38,7 +40,9 @@ from .email import (
     send_email,
     send_verification_email,
     send_password_reset_email,
-    send_welcome_email
+    send_welcome_email,
+    send_otp_email,
+    send_activation_email
 )
 
 
@@ -56,6 +60,8 @@ __all__ = [
     "decode_token",
     "generate_verification_token",
     "generate_reset_password_token",
+    "generate_otp_code",
+    "generate_device_token",
     "Token",
     "TokenData",
     "pwd_context",
@@ -83,4 +89,6 @@ __all__ = [
     "send_verification_email",
     "send_password_reset_email",
     "send_welcome_email",
+    "send_otp_email",
+    "send_activation_email",
 ]
