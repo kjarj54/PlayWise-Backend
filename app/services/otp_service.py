@@ -91,7 +91,10 @@ class OTPService:
             )
         
         # Verificar expiración
-        if datetime.now(timezone.utc) > otp.expires_at:
+        current_time = datetime.now(timezone.utc)
+        expires_at = otp.expires_at.replace(tzinfo=timezone.utc) if otp.expires_at.tzinfo is None else otp.expires_at
+        
+        if current_time > expires_at:
             otp.is_used = True
             session.commit()
             raise HTTPException(
@@ -174,11 +177,15 @@ class OTPService:
             return False
         
         # Verificar expiración si existe
-        if device.expires_at and datetime.now(timezone.utc) > device.expires_at:
-            # Eliminar dispositivo expirado
-            session.delete(device)
-            session.commit()
-            return False
+        if device.expires_at:
+            current_time = datetime.now(timezone.utc)
+            expires_at = device.expires_at.replace(tzinfo=timezone.utc) if device.expires_at.tzinfo is None else device.expires_at
+            
+            if current_time > expires_at:
+                # Eliminar dispositivo expirado
+                session.delete(device)
+                session.commit()
+                return False
         
         # Actualizar último uso
         device.last_used_at = datetime.now(timezone.utc)
@@ -318,8 +325,9 @@ class OTPService:
         Returns:
             Número de OTPs eliminados
         """
+        current_time = datetime.now(timezone.utc)
         statement = select(OTPCode).where(
-            OTPCode.expires_at < datetime.now(timezone.utc)
+            OTPCode.expires_at < current_time
         )
         expired = session.exec(statement).all()
         
