@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from fastapi import HTTPException, status
 from app.models import WishList, WishListCreate
@@ -14,12 +14,16 @@ class WishListService:
         session: Session,
         user_id: int,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
+        game_id: Optional[int] = None,
     ) -> List[WishList]:
         """Obtener wishlist de un usuario"""
-        statement = select(WishList).where(
-            WishList.user_id == user_id
-        ).offset(skip).limit(limit)
+        statement = select(WishList).where(WishList.user_id == user_id)
+
+        if game_id:
+            statement = statement.where(WishList.game_id == game_id)
+
+        statement = statement.offset(skip).limit(limit)
         
         return list(session.exec(statement).all())
     
