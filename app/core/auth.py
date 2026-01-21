@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import Session, select
 from typing import Optional
@@ -16,6 +16,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Scheme alternativo para Bearer en header
 security = HTTPBearer()
+
+# Scheme opcional que no requiere token
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
 # =========================
@@ -201,12 +204,13 @@ async def get_moderator_user(
 # OPTIONAL AUTH
 # =========================
 async def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme_optional),
     session: Session = Depends(get_session)
 ) -> Optional[User]:
     """
     Dependency opcional para obtener el usuario si está autenticado
     Útil para endpoints que pueden funcionar con o sin autenticación
+    No requiere el header Authorization (auto_error=False)
     
     Args:
         token: Optional JWT token from Authorization header

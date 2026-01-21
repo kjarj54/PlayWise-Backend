@@ -83,12 +83,11 @@ def get_game_by_api_id(
 @router.post("/", response_model=GameRead, status_code=status.HTTP_201_CREATED)
 def create_game(
     game_data: GameCreate,
-    session: Session = Depends(get_session),
-    current_user: User | None = Depends(get_current_user_optional)
+    session: Session = Depends(get_session)
 ):
     """
     Crear juego de forma idempotente. Si ya existe por api_id, retorna el existente.
-    Permite que clientes móviles agreguen juegos por api_id sin requerir rol admin.
+    Endpoint público - no requiere autenticación para permitir a clientes agregar juegos.
     """
     return GameService.create_game(session, game_data)
 
@@ -96,11 +95,11 @@ def create_game(
 @router.post("/ensure", response_model=GameRead, status_code=status.HTTP_200_OK)
 def ensure_game_by_api_id(
     game_data: GameCreate,
-    session: Session = Depends(get_session),
-    current_user: User | None = Depends(get_current_user_optional)
+    session: Session = Depends(get_session)
 ):
     """
     Obtener o crear un juego usando api_id como clave única. Devuelve 200 siempre.
+    Endpoint público - no requiere autenticación.
     """
     return GameService.ensure_by_api_id(session, game_data)
 
