@@ -22,7 +22,7 @@ def init_db():
         CommentUser, Store, Friend
     )
     SQLModel.metadata.create_all(engine)
-
+ 
 
 def get_session() -> Generator[Session, None, None]:
     """Dependency para obtener una sesión de base de datos"""
