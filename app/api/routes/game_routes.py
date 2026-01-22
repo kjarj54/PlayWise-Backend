@@ -4,7 +4,7 @@ from typing import List, Optional
 from app.db import get_session
 from app.services import GameService
 from app.models import User, Game, GameCreate, GameRead, GameUpdate
-from app.core import get_current_user_optional
+from app.core import get_current_user_optional, get_admin_user
 
 
 router = APIRouter(prefix="/games", tags=["Games"])
