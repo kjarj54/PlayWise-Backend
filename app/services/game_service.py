@@ -44,33 +44,22 @@ class GameService:
     
     @staticmethod
     def create_game(session: Session, game_data: GameCreate) -> Game:
-        """Crear nuevo juego. Si ya existe por api_id, retorna el existente (idempotente)."""
+        """Crear nuevo juego"""
+        # Verificar si ya existe por api_id
         if game_data.api_id:
             existing_game = GameService.get_by_api_id(session, game_data.api_id)
             if existing_game:
+                print(f"✅ Juego ya existe con api_id={game_data.api_id}, retornando existente")
                 return existing_game
-
+        
+        print(f"🆕 Creando nuevo juego: {game_data.name} (api_id={game_data.api_id})")
         game = Game(**game_data.model_dump())
         session.add(game)
         session.commit()
         session.refresh(game)
-
+        print(f"✅ Juego creado con ID={game.id}")
+        
         return game
-
-    @staticmethod
-    def ensure_by_api_id(session: Session, game_data: GameCreate) -> Game:
-        """Obtener o crear juego usando api_id como clave única."""
-        if not game_data.api_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="api_id is required to ensure game record"
-            )
-
-        existing = GameService.get_by_api_id(session, game_data.api_id)
-        if existing:
-            return existing
-
-        return GameService.create_game(session, game_data)
     
     @staticmethod
     def update_game(

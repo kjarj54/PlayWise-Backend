@@ -31,8 +31,8 @@ class WishList(WishListBase, table=True):
 # WISHLIST SCHEMAS (DTOs)
 # =========================
 class WishListCreate(SQLModel):
-    """Schema para agregar a wishlist"""
-    game_id: int
+    """Schema para agregar a wishlist usando api_id del juego"""
+    api_id: str  # Usar api_id en lugar de game_id para evitar problemas con integers grandes
     url: Optional[str] = None
 
 
@@ -46,7 +46,14 @@ class WishListRead(SQLModel):
 
 
 class WishListReadWithGame(WishListRead):
-    """Schema para leer wishlist con datos del juego"""
-    game_name: Optional[str] = None
-    game_cover: Optional[str] = None
+    """Schema para leer wishlist con datos completos del juego"""
+    game_name: str
     game_genre: Optional[str] = None
+    game_api_id: Optional[str] = None
+    game_description: Optional[str] = None
+    game_api_rating: Optional[str] = None
+    game_cover_image: Optional[str] = None
+    game_release_date: Optional[str] = None
+    game_platforms: Optional[str] = None
+    game_developer: Optional[str] = None
+    game_publisher: Optional[str] = None

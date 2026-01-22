@@ -4,7 +4,7 @@ from typing import List, Optional
 from app.db import get_session
 from app.services import GameService
 from app.models import User, Game, GameCreate, GameRead, GameUpdate
-from app.core import get_current_user_optional, get_admin_user
+from app.core import get_current_user, get_admin_user, get_current_user_optional
 
 
 router = APIRouter(prefix="/games", tags=["Games"])
@@ -65,12 +65,37 @@ def get_game(
     return game
 
 
+@router.post("/", response_model=GameRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=GameRead, status_code=status.HTTP_201_CREATED, include_in_schema=False)
+def create_game(
+    game_data: GameCreate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Crear nuevo juego (solo admin)
+    
+    - **name**: Nombre del juego (requerido)
+    - **genre**: Género (opcional)
+    - **api_id**: ID de API externa (opcional)
+    - **description**: Descripción (opcional)
+    - **cover_image**: URL de portada (opcional)
+    - **release_date**: Fecha de lanzamiento (opcional)
+    - **platforms**: Plataformas (opcional)
+    - **developer**: Desarrollador (opcional)
+    - **publisher**: Distribuidor (opcional)
+    
+    Requiere rol de administrador
+    """
+    return GameService.create_game(session, game_data)
+
+
 @router.get("/by-api-id/{api_id}", response_model=GameRead)
 def get_game_by_api_id(
     api_id: str,
     session: Session = Depends(get_session)
 ):
-    """Obtener juego por api_id (clave externa de RAWG u otra API)."""
+    """Obtener juego por api_id externo"""
     game = GameService.get_by_api_id(session, api_id)
     if not game:
         raise HTTPException(
@@ -78,30 +103,6 @@ def get_game_by_api_id(
             detail="Game not found"
         )
     return game
-
-
-@router.post("/", response_model=GameRead, status_code=status.HTTP_201_CREATED)
-def create_game(
-    game_data: GameCreate,
-    session: Session = Depends(get_session)
-):
-    """
-    Crear juego de forma idempotente. Si ya existe por api_id, retorna el existente.
-    Endpoint público - no requiere autenticación para permitir a clientes agregar juegos.
-    """
-    return GameService.create_game(session, game_data)
-
-
-@router.post("/ensure", response_model=GameRead, status_code=status.HTTP_200_OK)
-def ensure_game_by_api_id(
-    game_data: GameCreate,
-    session: Session = Depends(get_session)
-):
-    """
-    Obtener o crear un juego usando api_id como clave única. Devuelve 200 siempre.
-    Endpoint público - no requiere autenticación.
-    """
-    return GameService.ensure_by_api_id(session, game_data)
 
 
 @router.put("/{game_id}", response_model=GameRead)

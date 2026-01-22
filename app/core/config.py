@@ -45,8 +45,14 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: Optional[str] = None
     SMTP_FROM_NAME: Optional[str] = None
     
-    # CORS - Configurado para desarrollo móvil
-    ALLOWED_ORIGINS: list[str] = ["*"]  # Permite todas las origins para apps móviles
+    # CORS - Configurado según ambiente
+    # En producción, especificar solo los dominios permitidos
+    ALLOWED_ORIGINS: list[str] = [
+        "http://localhost:3000",  # Desarrollo frontend web
+        "http://localhost:8081",  # Expo local
+        "https://playwise.com",   # Producción web (cambiar según tu dominio)
+        # Agregar más dominios según sea necesario
+    ]
     
     # External Game APIs
     RAWG_API_KEY: Optional[str] = None  # https://rawg.io/apidocs

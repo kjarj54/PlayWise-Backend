@@ -96,7 +96,6 @@ class AuthService:
             )
         
         # Verificar si necesita OTP
-        # Si nunca ha verificado OTP o el dispositivo no es de confianza
         needs_otp = False
         
         if not user.otp_verified_once:

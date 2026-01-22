@@ -41,7 +41,7 @@ from app.api.routes import (
     user_router,
     game_router,
     wishlist_router,
-    wishlist_router_plural,
+    wishlist_legacy_router,
     calification_router,
     friend_router,
     web_pages_router
@@ -52,7 +52,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
 app.include_router(game_router, prefix="/api")
 app.include_router(wishlist_router, prefix="/api")
-app.include_router(wishlist_router_plural, prefix="/api")
+app.include_router(wishlist_legacy_router, prefix="/api")
 app.include_router(calification_router, prefix="/api")
 app.include_router(friend_router, prefix="/api")
 
