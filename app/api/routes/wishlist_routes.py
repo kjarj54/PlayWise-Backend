@@ -35,7 +35,7 @@ def get_my_wishlist(
     )
 
 
-@base_router.post("/", response_model=WishListRead, status_code=status.HTTP_201_CREATED)
+@base_router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def add_to_wishlist(
     wishlist_data: WishListCreate,
     session: Session = Depends(get_session),
@@ -54,18 +54,18 @@ def add_to_wishlist(
 
 @base_router.delete("/{wishlist_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_from_wishlist(
-    wishlist_id: int,
+    wishlist_id: str,  # Aceptar como string para preservar precisión con números grandes
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Eliminar juego de wishlist
+    Eliminar juego de wishlist usando el ID del item de wishlist
     
     - **wishlist_id**: ID del item de wishlist a eliminar
     
     Requiere autenticación
     """
-    WishListService.remove_from_wishlist(session, current_user.id, wishlist_id)
+    WishListService.remove_from_wishlist(session, current_user.id, int(wishlist_id))
     return None
 
 

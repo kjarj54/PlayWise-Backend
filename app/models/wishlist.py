@@ -38,7 +38,7 @@ class WishListCreate(SQLModel):
 
 class WishListRead(SQLModel):
     """Schema para leer wishlist (respuesta API)"""
-    id: int
+    id: str  # Convertir a string para evitar problemas de precisión en JavaScript con números grandes
     game_id: int
     user_id: int
     url: Optional[str] = None

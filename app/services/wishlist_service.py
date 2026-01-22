@@ -33,7 +33,7 @@ class WishListService:
             game = GameService.get_by_id(session, item.game_id)
             if game:
                 result.append({
-                    "id": item.id,
+                    "id": str(item.id),  # Convertir a string para evitar problemas de precisión en JavaScript
                     "game_id": item.game_id,
                     "user_id": item.user_id,
                     "url": item.url,
@@ -57,7 +57,7 @@ class WishListService:
         session: Session,
         user_id: int,
         wishlist_data: WishListCreate
-    ) -> WishList:
+    ) -> Dict[str, Any]:
         """Agregar juego a wishlist usando api_id"""
         # Buscar el juego por api_id en lugar de ID numérico
         print(f"🔍 Buscando juego por api_id={wishlist_data.api_id}")
@@ -93,7 +93,14 @@ class WishListService:
         session.commit()
         session.refresh(wishlist_item)
         
-        return wishlist_item
+        # Retornar diccionario con ID como string para preservar precisión
+        return {
+            "id": str(wishlist_item.id),
+            "game_id": wishlist_item.game_id,
+            "user_id": wishlist_item.user_id,
+            "url": wishlist_item.url,
+            "added_at": wishlist_item.added_at
+        }
     
     @staticmethod
     def remove_from_wishlist(
@@ -102,7 +109,30 @@ class WishListService:
         wishlist_id: int
     ) -> bool:
         """Eliminar juego de wishlist"""
+        print(f"🗑️ Intentando eliminar wishlist_id={wishlist_id} (tipo: {type(wishlist_id)}) para user_id={user_id}")
+        
+        # Convertir a int si es necesario para evitar problemas con IDs grandes
+        try:
+            wishlist_id = int(wishlist_id)
+        except (ValueError, TypeError) as e:
+            print(f"❌ Error convirtiendo wishlist_id a int: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid wishlist ID"
+            )
+        
         wishlist_item = session.get(WishList, wishlist_id)
+        print(f"📋 Item encontrado: {wishlist_item}")
+        
+        if not wishlist_item:
+            # Intentar buscar en la tabla completa como fallback
+            print(f"⚠️ Item no encontrado con session.get(), intentando con select...")
+            statement = select(WishList).where(
+                (WishList.id == wishlist_id) & 
+                (WishList.user_id == user_id)
+            )
+            wishlist_item = session.exec(statement).first()
+            print(f"📋 Resultado del select: {wishlist_item}")
         
         if not wishlist_item:
             raise HTTPException(
