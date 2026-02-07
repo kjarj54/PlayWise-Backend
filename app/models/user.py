@@ -50,6 +50,11 @@ class User(UserBase, table=True):
     reset_password_token: Optional[str] = Field(default=None, max_length=255)
     reset_password_expires: Optional[datetime] = Field(default=None)
     
+    # Email change fields
+    pending_email: Optional[str] = Field(default=None, max_length=255)  # Nuevo email pendiente
+    email_change_token: Optional[str] = Field(default=None, max_length=255)  # Token de confirmación
+    email_change_expires: Optional[datetime] = Field(default=None)  # Expiración del token
+    
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

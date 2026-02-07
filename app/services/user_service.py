@@ -380,3 +380,181 @@ class UserService:
             user.last_login = datetime.utcnow()
             session.add(user)
             session.commit()
+    
+    @staticmethod
+    def request_email_change(session: Session, user_id: int, new_email: str) -> User:
+        """
+        Solicitar cambio de email.
+        Desactiva la cuenta y envía email de verificación al nuevo correo.
+        """
+        user = UserService.get_by_id(session, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Validar que el nuevo email sea diferente al actual
+        if new_email.lower() == user.email.lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New email must be different from current email"
+            )
+        
+        # Validar que el nuevo email no esté en uso
+        existing_user = UserService.get_by_email(session, new_email)
+        if existing_user and existing_user.id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already in use by another account"
+            )
+        
+        # Desactivar cuenta temporalmente
+        user.is_active = False
+        user.pending_email = new_email
+        user.email_change_token = generate_verification_token()
+        user.email_change_expires = datetime.utcnow() + timedelta(hours=24)
+        user.updated_at = datetime.utcnow()
+        
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        return user
+    
+    @staticmethod
+    def confirm_email_change(session: Session, token: str) -> User:
+        """
+        Confirmar cambio de email con token.
+        Actualiza el email y reactiva la cuenta.
+        """
+        from sqlmodel import select
+        
+        statement = select(User).where(User.email_change_token == token)
+        user = session.exec(statement).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token"
+            )
+        
+        # Verificar que no haya expirado
+        if user.email_change_expires and user.email_change_expires < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token has expired"
+            )
+        
+        # Verificar que haya un email pendiente
+        if not user.pending_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No email change request found"
+            )
+        
+        # Guardar el email anterior para notificación
+        old_email = user.email
+        
+        # Actualizar email
+        user.email = user.pending_email
+        user.pending_email = None
+        user.email_change_token = None
+        user.email_change_expires = None
+        user.is_active = True  # Reactivar cuenta
+        user.is_verified = True  # Mantener verificado
+        user.updated_at = datetime.utcnow()
+        
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        # Guardar el email anterior para enviar notificación después
+        user._old_email = old_email
+        
+        return user
+    
+    @staticmethod
+    def cancel_email_change(session: Session, user_id: int) -> User:
+        """
+        Cancelar cambio de email pendiente y reactivar cuenta.
+        """
+        user = UserService.get_by_id(session, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        if not user.pending_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No email change request found"
+            )
+        
+        # Cancelar cambio y reactivar
+        user.pending_email = None
+        user.email_change_token = None
+        user.email_change_expires = None
+        user.is_active = True
+        user.updated_at = datetime.utcnow()
+        
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        
+        return user
+    
+    @staticmethod
+    def delete_account_permanently(session: Session, user_id: int) -> bool:
+        """
+        Eliminar cuenta permanentemente con todos los datos relacionados.
+        Este es un borrado físico (hard delete), no un soft delete.
+        """
+        from sqlmodel import select, delete
+        from app.models import WishList, Friend, CalificationGame, CommentUser
+        from app.models.device import TrustedDevice, OTPCode
+        
+        user = UserService.get_by_id(session, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        try:
+            # 1. Eliminar wishlist items
+            session.exec(delete(WishList).where(WishList.user_id == user_id))
+            
+            # 2. Eliminar solicitudes de amistad (enviadas y recibidas)
+            session.exec(delete(Friend).where(
+                (Friend.requester_id == user_id) | (Friend.receiver_id == user_id)
+            ))
+            
+            # 3. Eliminar calificaciones
+            session.exec(delete(CalificationGame).where(CalificationGame.user_id == user_id))
+            
+            # 4. Eliminar comentarios
+            session.exec(delete(CommentUser).where(CommentUser.user_id == user_id))
+            
+            # 5. Eliminar dispositivos de confianza
+            session.exec(delete(TrustedDevice).where(TrustedDevice.user_id == user_id))
+            
+            # 6. Eliminar códigos OTP
+            session.exec(delete(OTPCode).where(OTPCode.user_id == user_id))
+            
+            # 7. Finalmente, eliminar el usuario
+            session.delete(user)
+            
+            # Commit todas las eliminaciones
+            session.commit()
+            
+            return True
+            
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error deleting account: {str(e)}"
+            )
+

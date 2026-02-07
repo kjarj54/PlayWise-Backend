@@ -11,11 +11,32 @@ from app.core import (
     get_current_user, get_current_active_user, 
     get_admin_user
 )
+from app.core.email import (
+    send_email_change_verification,
+    send_email_changed_notification
+)
+from pydantic import BaseModel, EmailStr
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
+# =========================
+# SCHEMAS
+# =========================
+class EmailChangeRequest(BaseModel):
+    """Schema para solicitar cambio de email"""
+    new_email: EmailStr
+
+
+class EmailChangeVerification(BaseModel):
+    """Schema para verificar cambio de email"""
+    token: str
+
+
+# =========================
+# USER PROFILE ROUTES
+# =========================
 @router.get("/me", response_model=UserReadPrivate)
 def get_my_profile(
     current_user: User = Depends(get_current_active_user)
@@ -104,18 +125,165 @@ def change_password(
     return {"message": "Password updated successfully"}
 
 
+# =========================
+# EMAIL CHANGE ROUTES
+# =========================
+@router.post("/me/request-email-change")
+async def request_email_change(
+    email_data: EmailChangeRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Solicitar cambio de correo electrónico
+    
+    Este endpoint:
+    1. Valida que el nuevo email no esté en uso
+    2. Desactiva temporalmente la cuenta por seguridad
+    3. Envía un email de verificación al nuevo correo
+    4. El usuario debe confirmar mediante el link recibido
+    
+    - **new_email**: Nuevo correo electrónico
+    
+    Requiere autenticación
+    """
+    # Solicitar cambio de email
+    user = UserService.request_email_change(
+        session, 
+        current_user.id, 
+        email_data.new_email
+    )
+    
+    # Enviar email de verificación al nuevo correo
+    email_sent = await send_email_change_verification(
+        user.pending_email,
+        user.username,
+        user.email_change_token
+    )
+    
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification email"
+        )
+    
+    return {
+        "message": "Verification email sent. Please check your new email to confirm the change.",
+        "new_email": user.pending_email,
+        "expires_at": user.email_change_expires
+    }
+
+
+@router.post("/verify-email-change")
+async def verify_email_change(
+    verification_data: EmailChangeVerification,
+    session: Session = Depends(get_session)
+):
+    """
+    Confirmar cambio de correo electrónico
+    
+    Este endpoint:
+    1. Valida el token de verificación
+    2. Actualiza el email a la nueva dirección
+    3. Reactiva la cuenta
+    4. Envía notificación al correo anterior
+    
+    - **token**: Token de verificación recibido por email
+    
+    No requiere autenticación (se usa el token)
+    """
+    # Confirmar cambio de email
+    user = UserService.confirm_email_change(session, verification_data.token)
+    
+    # Enviar notificación al correo anterior
+    old_email = getattr(user, '_old_email', None)
+    if old_email:
+        await send_email_changed_notification(old_email, user.username)
+    
+    return {
+        "message": "Email changed successfully. Your account has been reactivated.",
+        "new_email": user.email
+    }
+
+
+@router.post("/me/cancel-email-change")
+def cancel_email_change(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)  # Permite usuarios inactivos
+):
+    """
+    Cancelar cambio de correo electrónico pendiente
+    
+    Este endpoint:
+    1. Cancela el cambio de email pendiente
+    2. Reactiva la cuenta
+    
+    Útil si el usuario cambió de opinión o cometió un error.
+    
+    Requiere autenticación
+    """
+    user = UserService.cancel_email_change(session, current_user.id)
+    
+    return {
+        "message": "Email change cancelled successfully. Your account has been reactivated.",
+        "email": user.email
+    }
+
+
+# =========================
+# ACCOUNT DELETION ROUTES
+# =========================
 @router.delete("/me")
-def delete_my_account(
+def deactivate_my_account(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """
     Desactivar cuenta del usuario actual (soft delete)
     
+    La cuenta será desactivada pero los datos permanecerán en el sistema.
+    Para eliminar permanentemente la cuenta, usa el endpoint /me/delete-permanently
+    
     Requiere autenticación
     """
     UserService.delete_user(session, current_user.id)
     return {"message": "Account deactivated successfully"}
+
+
+@router.delete("/me/delete-permanently")
+async def delete_account_permanently(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Eliminar cuenta permanentemente (hard delete)
+    
+    ⚠️ **ADVERTENCIA: Esta acción es IRREVERSIBLE** ⚠️
+    
+    Este endpoint eliminará completamente:
+    - Tu perfil de usuario
+    - Todas tus listas de deseos (wishlists)
+    - Todas tus solicitudes de amistad (enviadas y recibidas)
+    - Todas tus calificaciones de juegos
+    - Todos tus comentarios
+    - Todos tus dispositivos de confianza
+    - Todos tus códigos OTP
+    
+    No podrás recuperar estos datos después de la eliminación.
+    
+    Requiere autenticación
+    """
+    success = UserService.delete_account_permanently(session, current_user.id)
+    
+    if success:
+        return {
+            "message": "Account and all associated data deleted permanently. We're sorry to see you go!"
+        }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account"
+        )
 
 
 # =========================

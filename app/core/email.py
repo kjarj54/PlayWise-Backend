@@ -404,3 +404,105 @@ async def send_activation_email(email: str, username: str, activation_token: str
     return await send_email(email, "Activa tu cuenta de PlayWise", plain_body, html_body)
 
 
+async def send_email_change_verification(new_email: str, username: str, verification_token: str) -> bool:
+    """
+    Envía email de verificación para cambio de correo electrónico.
+    El usuario debe confirmar el nuevo email antes de que se actualice.
+    """
+    if settings.BACKEND_URL:
+        # Modo con link
+        verification_url = f"{settings.BACKEND_URL}/verify-email-change?token={verification_token}"
+        
+        content = f"""
+        <h2 style="color: #18181b; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; line-height: 1.3;">Hola, {username}</h2>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;">Recibimos una solicitud para cambiar el correo electrónico de tu cuenta de PlayWise.</p>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;"><strong>Nuevo correo:</strong> {new_email}</p>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;">Haz clic en el botón a continuación para confirmar este cambio:</p>
+        """
+        
+        html_body = get_email_template(
+            "Confirma el cambio de correo",
+            content,
+            button_text="Confirmar nuevo correo",
+            button_url=verification_url
+        )
+        
+        html_body += f"""
+        <div style="margin-top: 24px; padding: 16px; background-color: #fafafa; border: 1px solid #e5e5e5; border-radius: 6px;">
+            <p style="margin: 0 0 8px 0; color: #52525b; font-size: 13px; font-weight: 600;">
+                Si el botón no funciona:
+            </p>
+            <p style="margin: 0; color: #667eea; font-size: 12px; word-break: break-all; font-family: monospace;">
+                {verification_url}
+            </p>
+        </div>
+        <div style="margin-top: 20px; padding: 14px 16px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+            <p style="margin: 0 0 10px 0; color: #92400e; font-size: 13px;">
+                <strong>Importante:</strong> Tu cuenta ha sido temporalmente desactivada hasta que confirmes este cambio.
+            </p>
+            <p style="margin: 0; color: #92400e; font-size: 13px;">
+                Este enlace expira en 24 horas. Si no solicitaste este cambio, contacta con soporte inmediatamente.
+            </p>
+        </div>
+        """
+        
+        plain_body = f"Hola {username},\n\nRecibimos una solicitud para cambiar tu correo electrónico a: {new_email}\n\nConfirma haciendo clic en el siguiente enlace:\n{verification_url}\n\nO ingresa este código en la aplicación: {verification_token}\n\nTu cuenta ha sido temporalmente desactivada hasta que confirmes este cambio.\nEste enlace expira en 24 horas.\n\nSi no solicitaste este cambio, contacta con soporte.\n\nSaludos,\nEquipo PlayWise"
+    else:
+        # Modo solo código
+        content = f"""
+        <h2 style="color: #18181b; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; line-height: 1.3;">Hola, {username}</h2>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;">Recibimos una solicitud para cambiar el correo electrónico de tu cuenta de PlayWise.</p>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;"><strong>Nuevo correo:</strong> {new_email}</p>
+        <p style="margin: 0 0 16px 0; color: #3f3f46;">Utiliza el siguiente código en la aplicación para confirmar este cambio:</p>
+        """
+        
+        html_body = get_email_template(
+            "Confirma el cambio de correo",
+            content,
+            button_code=verification_token
+        )
+        
+        html_body += f"""
+        <div style="margin-top: 20px; padding: 14px 16px; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 4px;">
+            <p style="margin: 0 0 10px 0; color: #92400e; font-size: 13px;">
+                <strong>Importante:</strong> Tu cuenta ha sido temporalmente desactivada hasta que confirmes este cambio.
+            </p>
+            <p style="margin: 0; color: #92400e; font-size: 13px;">
+                Este código expira en 24 horas. Si no solicitaste este cambio, contacta con soporte inmediatamente.
+            </p>
+        </div>
+        """
+        
+        plain_body = f"Hola {username},\n\nRecibimos una solicitud para cambiar tu correo electrónico a: {new_email}\n\nCódigo de confirmación: {verification_token}\n\nIngresa este código en la aplicación para confirmar el cambio.\n\nTu cuenta ha sido temporalmente desactivada hasta que confirmes este cambio.\nEste código expira en 24 horas.\n\nSi no solicitaste este cambio, contacta con soporte.\n\nSaludos,\nEquipo PlayWise"
+    
+    return await send_email(new_email, "Confirma el cambio de correo - PlayWise", plain_body, html_body)
+
+
+async def send_email_changed_notification(old_email: str, username: str) -> bool:
+    """
+    Envía notificación al correo anterior informando que el email fue cambiado exitosamente.
+    """
+    content = f"""
+    <h2 style="color: #18181b; margin: 0 0 20px 0; font-size: 22px; font-weight: 600; line-height: 1.3;">Hola, {username}</h2>
+    <p style="margin: 0 0 16px 0; color: #3f3f46;">El correo electrónico asociado a tu cuenta de PlayWise ha sido cambiado exitosamente.</p>
+    <p style="margin: 0 0 16px 0; color: #3f3f46;">Tu cuenta ha sido reactivada y ya puedes iniciar sesión con tu nuevo correo electrónico.</p>
+    <div style="margin-top: 20px; padding: 14px 16px; background-color: #fee2e2; border-left: 3px solid #dc2626; border-radius: 4px;">
+        <p style="margin: 0 0 10px 0; color: #991b1b; font-size: 13px;">
+            <strong>¿No autorizaste este cambio?</strong>
+        </p>
+        <p style="margin: 0; color: #991b1b; font-size: 13px;">
+            Si no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte para proteger tu cuenta.
+        </p>
+    </div>
+    """
+    
+    html_body = get_email_template(
+        "Correo electrónico actualizado",
+        content
+    )
+    
+    plain_body = f"Hola {username},\n\nEl correo electrónico asociado a tu cuenta de PlayWise ha sido cambiado exitosamente.\n\nTu cuenta ha sido reactivada y ya puedes iniciar sesión con tu nuevo correo electrónico.\n\n¿No autorizaste este cambio?\nSi no realizaste este cambio, contacta inmediatamente con nuestro equipo de soporte.\n\nSaludos,\nEquipo PlayWise"
+    
+    return await send_email(old_email, "Correo electrónico actualizado - PlayWise", plain_body, html_body)
+
+
