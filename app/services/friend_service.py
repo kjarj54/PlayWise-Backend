@@ -55,6 +55,15 @@ class FriendService:
                 detail="Cannot send friend request to yourself"
             )
         
+        # Verificar que el usuario receptor existe
+        from app.models import User
+        receiver = session.get(User, receiver_id)
+        if not receiver:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
         # Verificar si ya existe una relación
         statement = select(Friend).where(
             ((Friend.requester_id == requester_id) & (Friend.receiver_id == receiver_id)) |

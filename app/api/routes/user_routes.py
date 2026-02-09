@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
+from sqlmodel import Session, select, col
 from typing import List
 from app.db import get_session
 from app.services import UserService
 from app.models import (
     User, UserRead, UserReadPrivate, UserUpdate, 
-    UserUpdatePassword, UserRole
+    UserUpdatePassword, UserRole, UserSearchResult
 )
 from app.core import (
     get_current_user, get_current_active_user, 
@@ -85,6 +85,61 @@ def get_user_by_username(
             detail="User not found"
         )
     return user
+
+
+@router.get("/search/", response_model=List[UserSearchResult])
+def search_users(
+    search: str,
+    limit: int = 20,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Buscar usuarios por username (datos públicos)
+    
+    - **search**: Término de búsqueda (username)
+    - **limit**: Número máximo de resultados (default: 20)
+    
+    Requiere autenticación
+    """
+    from app.models import Friend, FriendStatus
+    
+    statement = select(User).where(
+        User.is_active == True,
+        col(User.username).ilike(f"%{search}%")
+    ).limit(limit)
+    
+    users = session.exec(statement).all()
+    
+    # Add friendship status for each user
+    results = []
+    for user in users:
+        # Check friendship status
+        friendship = session.exec(
+            select(Friend).where(
+                (
+                    ((Friend.requester_id == current_user.id) & (Friend.receiver_id == user.id)) |
+                    ((Friend.requester_id == user.id) & (Friend.receiver_id == current_user.id))
+                )
+            )
+        ).first()
+        
+        status = None
+        if friendship:
+            if friendship.status == FriendStatus.ACCEPTED:
+                status = "accepted"
+            elif friendship.status == FriendStatus.PENDING:
+                # Determine if current user sent or received the request
+                if friendship.requester_id == current_user.id:
+                    status = "sent_pending"
+                else:
+                    status = "pending"
+        
+        user_dict = user.dict()
+        user_dict['friendship_status'] = status
+        results.append(UserSearchResult(**user_dict))
+    
+    return results
 
 
 @router.put("/me", response_model=UserRead)

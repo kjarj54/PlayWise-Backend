@@ -11,6 +11,7 @@ from .user import (
     UserCreateGoogle,
     UserRead, 
     UserReadPrivate,
+    UserSearchResult,
     UserUpdate,
     UserUpdatePassword,
     UserResetPassword,

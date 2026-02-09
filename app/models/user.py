@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime, timezone
 from enum import Enum
+from pydantic import field_serializer
 
 
 class UserRole(str, Enum):
@@ -101,12 +102,22 @@ class UserRead(SQLModel):
     is_verified: bool
     auth_provider: AuthProvider
     created_at: datetime
+    
+    @field_serializer('id')
+    def serialize_id(self, value: int, _info):
+        """Serialize ID as string to prevent JavaScript precision loss"""
+        return str(value)
 
 
 class UserReadPrivate(UserRead):
     """Schema para leer datos privados del usuario (solo el propio usuario)"""
     last_login: Optional[datetime] = None
     updated_at: datetime
+
+
+class UserSearchResult(UserRead):
+    """Schema para resultados de búsqueda con estado de relación"""
+    friendship_status: Optional[str] = None  # None, 'pending', 'accepted', 'sent_pending'
 
 
 class UserUpdate(SQLModel):
