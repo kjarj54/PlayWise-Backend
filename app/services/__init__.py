@@ -8,6 +8,7 @@ from .game_service import GameService
 from .wishlist_service import WishListService
 from .calification_service import CalificationService
 from .friend_service import FriendService
+from .comment_service import CommentService
 from .otp_service import OTPService
 
 
@@ -18,5 +19,6 @@ __all__ = [
     "WishListService",
     "CalificationService",
     "FriendService",
+    "CommentService",
     "OTPService",
 ]

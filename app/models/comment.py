@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime, timezone
+from pydantic import field_serializer
 
 
 # =========================
@@ -47,6 +48,16 @@ class CommentCreate(SQLModel):
     parent_comment_id: Optional[int] = None
 
 
+class CommentCreateRequest(SQLModel):
+    """Schema para crear un comentario con api_id o game_id"""
+    api_id: Optional[str] = None  # RAWG game ID
+    game_id: Optional[int] = None  # Internal DB game ID
+    game_name: Optional[str] = None  # Game name for auto-creation
+    content: str = Field(min_length=1, max_length=2000)
+    is_public: bool = True
+    parent_comment_id: Optional[int] = None
+
+
 class CommentRead(SQLModel):
     """Schema para leer un comentario (respuesta API)"""
     id: int
@@ -59,6 +70,11 @@ class CommentRead(SQLModel):
     likes_count: int
     created_at: datetime
     updated_at: datetime
+    
+    @field_serializer('id', 'user_id', 'game_id', 'parent_comment_id')
+    def serialize_ids(self, value: Optional[int]) -> Optional[str]:
+        """Convert large IDs to strings for JavaScript compatibility"""
+        return str(value) if value is not None else None
 
 
 class CommentReadWithUser(CommentRead):

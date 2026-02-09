@@ -44,6 +44,7 @@ from app.api.routes import (
     wishlist_legacy_router,
     calification_router,
     friend_router,
+    comment_router,
     web_pages_router
 )
 
@@ -55,6 +56,7 @@ app.include_router(wishlist_router, prefix="/api")
 app.include_router(wishlist_legacy_router, prefix="/api")
 app.include_router(calification_router, prefix="/api")
 app.include_router(friend_router, prefix="/api")
+app.include_router(comment_router, prefix="/api")
 
 # Incluir rutas web sin prefijo (para páginas HTML)
 app.include_router(web_pages_router)
@@ -76,7 +78,8 @@ def root():
             "games": "/api/games",
             "wishlist": "/api/wishlist",
             "califications": "/api/califications",
-            "friends": "/api/friends"
+            "friends": "/api/friends",
+            "comments": "/api/comments"
         }
     }
 

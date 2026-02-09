@@ -19,7 +19,7 @@ def init_db():
     # Importar todos los modelos para que SQLModel los registre
     from app.models import (
         User, Game, WishList, CalificationGame, 
-        CommentUser, Store, Friend
+        CommentUser, CommentLike, Store, Friend
     )
     SQLModel.metadata.create_all(engine)
  

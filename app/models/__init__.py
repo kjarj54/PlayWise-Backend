@@ -54,11 +54,14 @@ from .comment import (
     CommentUser,
     CommentUserBase,
     CommentCreate,
+    CommentCreateRequest,
     CommentRead,
     CommentReadWithUser,
     CommentReadWithReplies,
     CommentUpdate
 )
+
+from .comment_like import CommentLike
 
 # Store models
 from .store import (
@@ -113,8 +116,8 @@ __all__ = [
     "GameCalificationStats",
     
     # Comment
-    "CommentUser", "CommentUserBase", "CommentCreate", "CommentRead",
-    "CommentReadWithUser", "CommentReadWithReplies", "CommentUpdate",
+    "CommentUser", "CommentUserBase", "CommentCreate", "CommentCreateRequest", "CommentRead",
+    "CommentReadWithUser", "CommentReadWithReplies", "CommentUpdate", "CommentLike",
     
     # Store
     "Store", "StoreBase", "StoreCreate", "StoreRead", "StoreReadWithGame", "StoreUpdate",
