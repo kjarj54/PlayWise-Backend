@@ -47,6 +47,7 @@ from app.api.routes import (
     comment_router,
     web_pages_router
 )
+from app.api.routes.recommendation_routes import router as recommendation_router
 
 # Incluir routers con prefijo /api
 app.include_router(auth_router, prefix="/api")
@@ -57,6 +58,7 @@ app.include_router(wishlist_legacy_router, prefix="/api")
 app.include_router(calification_router, prefix="/api")
 app.include_router(friend_router, prefix="/api")
 app.include_router(comment_router, prefix="/api")
+app.include_router(recommendation_router, prefix="/api")
 
 # Incluir rutas web sin prefijo (para páginas HTML)
 app.include_router(web_pages_router)
@@ -79,7 +81,8 @@ def root():
             "wishlist": "/api/wishlist",
             "califications": "/api/califications",
             "friends": "/api/friends",
-            "comments": "/api/comments"
+            "comments": "/api/comments",
+            "recommendations": "/api/recommendations"
         }
     }
 

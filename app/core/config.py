@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     RAWG_API_KEY: Optional[str] = None  # https://rawg.io/apidocs
     CHEAPSHARK_API_URL: str = "https://www.cheapshark.com/api/1.0"  # No API key needed
     
+    # AI / Recommendations
+    GROQ_API_KEY: Optional[str] = None  # Groq API for AI recommendations (FREE)
+    
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     
