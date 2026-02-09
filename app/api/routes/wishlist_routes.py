@@ -86,6 +86,26 @@ def check_in_wishlist(
     return {"in_wishlist": in_wishlist}
 
 
+@base_router.get("/common/{friend_user_id}", response_model=List[dict])
+def get_common_wishlist_games(
+    friend_user_id: str,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Obtener juegos en común en wishlist entre el usuario actual y otro usuario
+    
+    - **friend_user_id**: ID del otro usuario
+    
+    Requiere autenticación
+    """
+    return WishListService.get_common_wishlist_games(
+        session,
+        current_user.id,
+        int(friend_user_id)
+    )
+
+
 # Exponer con prefijos plural y singular para compatibilidad
 router = APIRouter(prefix="/wishlists", tags=["Wishlist"])
 router.include_router(base_router)

@@ -160,3 +160,40 @@ class WishListService:
             (WishList.game_id == game_id)
         )
         return session.exec(statement).first() is not None
+    
+    @staticmethod
+    def get_common_wishlist_games(
+        session: Session,
+        user1_id: int,
+        user2_id: int
+    ) -> List[Dict[str, Any]]:
+        """Obtener juegos en común entre dos usuarios en sus wishlists"""
+        # Obtener game_ids de la wishlist del user1
+        statement1 = select(WishList.game_id).where(WishList.user_id == user1_id)
+        user1_game_ids = set(session.exec(statement1).all())
+        
+        # Obtener game_ids de la wishlist del user2
+        statement2 = select(WishList.game_id).where(WishList.user_id == user2_id)
+        user2_game_ids = set(session.exec(statement2).all())
+        
+        # Encontrar IDs en común
+        common_game_ids = user1_game_ids.intersection(user2_game_ids)
+        
+        if not common_game_ids:
+            return []
+        
+        # Obtener información completa de los juegos en común
+        result = []
+        for game_id in common_game_ids:
+            game = GameService.get_by_id(session, game_id)
+            if game:
+                result.append({
+                    "game_id": game.id,
+                    "game_name": game.name,
+                    "game_api_id": game.api_id,
+                    "game_cover_image": game.cover_image,
+                    "game_genre": game.genre,
+                    "game_api_rating": game.api_rating,
+                })
+        
+        return result
